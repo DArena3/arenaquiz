@@ -1,38 +1,10 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Welcome to CS50 Finance
+    Welcome to ArenaQuiz
 {% endblock %}
 
 {% block main %}
-    <h3>Your Stocks</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Price</th>
-                <th>Symbol</th>
-                <th>Shares</th>
-                <th>Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for holding in holdings %}
-                <tr>
-                    <td>{{ holding["name"] }}</td>
-                    <td>{{ holding["price"] | usd }}</td>
-                    <td>{{ holding["symbol"] }}</td>
-                    <td>{{ holding["shares"] }}</td>
-                    <td>{{ holding["value"] | usd }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-        </tfoot>
-    </table>
-    <div style="padding: 20px">
-
-    </div>
-    <h4>Your current cash balance is {{ display_cash | usd }}.</h4>
-    <h4>The total value of your assets and holdings is {{ display_total | usd }}.</h4>
+    <h3>hello</h3>
+    <h4>This page will have text soon</h4>
 {% endblock %}

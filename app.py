@@ -7,7 +7,7 @@ from tempfile import mkdtemp
 from werkzeug.exceptions import default_exceptions, HTTPException, InternalServerError
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, two_places
 
 # Configure application
 app = Flask(__name__)
@@ -26,7 +26,7 @@ def after_request(response):
 
 
 # Custom filter
-app.jinja_env.filters["usd"] = usd
+app.jinja_env.filters["2places"] = two_places
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
@@ -35,26 +35,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
-
-# Create table for history
-db.execute("""CREATE TABLE IF NOT EXISTS transactions
-              (transaction_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, type TEXT NOT NULL, shares INTEGER NOT NULL,
-              name TEXT NOT NULL, price NUMERIC NOT NULL, symbol TEXT NOT NULL, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              FOREIGN KEY (user_id) REFERENCES users(id))""")
-
-db.execute("CREATE UNIQUE INDEX IF NOT EXISTS transaction_id ON transactions (transaction_id)")
-db.execute("CREATE INDEX IF NOT EXISTS user_id ON transactions (user_id)")
-
-# Create table for index
-db.execute("""CREATE TABLE IF NOT EXISTS holdings
-              (holding_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, shares INTEGER NOT NULL,
-              name TEXT NOT NULL, price NUMERIC NOT NULL, symbol TEXT NOT NULL, value NOT NULL DEFAULT 0,
-              FOREIGN KEY (user_id) REFERENCES users(id))""")
-
-db.execute("CREATE UNIQUE INDEX IF NOT EXISTS holding_id ON holdings (holding_id)")
-db.execute("CREATE INDEX IF NOT EXISTS user_id ON holdings (user_id)")
-db.execute("CREATE INDEX IF NOT EXISTS symbol ON holdings (symbol)")
+db = SQL("sqlite:///records.db")
 
 # Make sure API key is set
 if not os.environ.get("API_KEY"):
@@ -65,82 +46,7 @@ if not os.environ.get("API_KEY"):
 @login_required
 def index():
     if request.method == "GET":
-        # Get current prices of each stock
-        rows = db.execute("SELECT * FROM holdings WHERE user_id = ?", session["user_id"])
-        for row in rows:
-            stock = lookup(row["symbol"])
-            db.execute("UPDATE holdings SET price = ?, value = ? WHERE user_id = ? AND symbol = ?",
-                       stock["price"], row["shares"] * stock["price"], session["user_id"], stock["symbol"])
-
-        # Get all of user's holdings
-        holdings = db.execute("SELECT * FROM holdings WHERE user_id = ?", session["user_id"])
-        sum_val = db.execute("SELECT SUM(value) FROM holdings WHERE user_id = ?", session["user_id"])[0]["SUM(value)"]
-        if sum_val == None:
-            holding_val = 0
-        else:
-            holding_val = sum_val
-
-        # Get cash
-        cash = db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])[0]["cash"]
-
-        display_cash = cash
-        display_total = float(cash) + holding_val
-
-        return render_template("index.html", holdings=holdings, display_cash=display_cash, display_total=display_total)
-
-
-@app.route("/buy", methods=["GET", "POST"])
-@login_required
-def buy():
-    """Buy shares of stock"""
-    if request.method == "POST":
-        if not request.form.get("symbol"):
-            return apology("Please enter symbol", 400)
-        elif not request.form.get("shares"):
-            return apology("Enter num of shares", 400)
-        elif not request.form.get("shares").isdigit() or int(request.form.get("shares")) <= 0:
-            return apology("Shares must be positive num", 400)
-
-        stock = lookup(request.form.get("symbol"))
-        cash = float(db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])[0]["cash"])
-        if stock == None:
-            return apology("Symbol not found", 400)
-        elif int(request.form.get("shares")) * stock["price"] > cash:
-            return apology("Not enough cash", 400)
-
-        shares_query = db.execute("SELECT shares FROM holdings WHERE symbol = ? AND user_id = ?",
-                                  stock["symbol"], session["user_id"])
-
-        # Update user's holdings to have the current shares of stock
-        if shares_query == []:
-            db.execute("INSERT INTO holdings (user_id, shares, name, price, symbol) VALUES (?, ?, ?, ?, ?)",
-                       session["user_id"], request.form.get("shares"), stock["name"], stock["price"], stock["symbol"])
-        else:
-            shares = shares_query[0]["shares"]
-            db.execute("UPDATE holdings SET shares = ? WHERE user_id = ? AND symbol = ?",
-                       shares + int(request.form.get("shares")), session["user_id"], stock["symbol"])
-
-        # Update transaction history and cash
-        db.execute("INSERT INTO transactions (user_id, type, shares, name, price, symbol) VALUES (?, ?, ?, ?, ?, ?)",
-                   session["user_id"], "buy", int(request.form.get("shares")),
-                   stock["name"], stock["price"], stock["symbol"])
-        db.execute("UPDATE users SET cash = ? WHERE id = ?",
-                   cash - int(request.form.get("shares")) * stock["price"], session["user_id"])
-
-        return redirect("/")
-
-    elif request.method == "GET":
-        return render_template("buy.html")
-
-
-@app.route("/history", methods=["GET"])
-@login_required
-def history():
-    # Display all transactions
-    if request.method == "GET":
-        transactions = db.execute("SELECT * FROM transactions WHERE user_id = ? ORDER BY timestamp DESC", session["user_id"])
-        return render_template("history.html", transactions=transactions)
-
+        return render_template("index.html")
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -171,6 +77,7 @@ def login():
         session["user_id"] = rows[0]["id"]
 
         # Redirect user to home page
+        flash("Logged in successfully.")
         return redirect("/")
 
     # User reached route via GET (as by clicking a link or via redirect)
@@ -187,21 +94,6 @@ def logout():
 
     # Redirect user to login form
     return redirect("/")
-
-
-@app.route("/quote", methods=["GET", "POST"])
-@login_required
-def quote():
-    """Get stock quote."""
-    if request.method == "POST":
-        # Lookup the stock
-        stock = lookup(request.form.get("symbol"))
-        if stock == None:
-            return apology("Symbol not found", 400)
-        else:
-            return render_template("quoted.html", name=stock["name"], price=stock["price"], symbol=stock["symbol"])
-    elif request.method == "GET":
-        return render_template("quote.html")
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -232,48 +124,12 @@ def register():
         return render_template("register.html")
 
 
-@app.route("/sell", methods=["GET", "POST"])
+@app.route("/teams")
 @login_required
-def sell():
-    if request.method == "POST":
-        if not request.form.get("symbol"):
-            return apology("Please enter symbol", 400)
-        elif not request.form.get("shares"):
-            return apology("Enter num of shares", 400)
-        elif not request.form.get("shares").isdigit() or int(request.form.get("shares")) <= 0:
-            return apology("Shares must be positive num", 400)
-        
-        # Check to see user has enough of stock
-        rows = db.execute("SELECT * FROM holdings WHERE user_id = ? AND symbol = ?", session["user_id"], request.form.get("symbol"))
-        if rows == []:
-            return apology("Don't have that stock", 400)
-        elif rows[0]["shares"] - int(request.form.get("shares")) < 0:
-            return apology("Don't have enough of that stock", 400)
-
-        stock = lookup(request.form.get("symbol"))
-        cash = float(db.execute("SELECT cash FROM users WHERE id = ?", session["user_id"])[0]["cash"])
-
-        # Update holdings, transaction history, cash
-        db.execute("UPDATE holdings SET shares = ? WHERE user_id = ? AND symbol = ?",
-                   rows[0]["shares"] - int(request.form.get("shares")), session["user_id"], stock["symbol"])
-
-        db.execute("INSERT INTO transactions (user_id, type, shares, name, price, symbol) VALUES (?, ?, ?, ?, ?, ?)",
-                   session["user_id"], "sell", int(request.form.get("shares")),
-                   stock["name"], stock["price"], stock["symbol"])
-
-        db.execute("UPDATE users SET cash = ? WHERE id = ?",
-                   cash + int(request.form.get("shares")) * stock["price"], session["user_id"])
-
-        if rows[0]["shares"] - int(request.form.get("shares")) == 0:
-            db.execute("DELETE FROM holdings WHERE user_id = ? AND symbol = ?", session["user_id"], stock["symbol"])
-
-        return redirect("/")
-
-    elif request.method == "GET":
-        rows = db.execute("SELECT * FROM holdings WHERE user_id = ?", session["user_id"])
-        return render_template("sell.html", rows=rows)
-
-
+def teams():
+    # TODO
+    pass
+    
 @app.route("/change_password", methods=["GET", "POST"])
 @login_required
 def change_password():
