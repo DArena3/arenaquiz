@@ -60,18 +60,21 @@ def login():
 
         # Ensure username was submitted
         if not request.form.get("username"):
-            return apology("must provide username", 403)
+            flash("Please provide a username.")
+            return render_template("login.html")
 
         # Ensure password was submitted
         elif not request.form.get("password"):
-            return apology("must provide password", 403)
+            flash("Please provide a password.")
+            return render_template("login.html")
 
         # Query database for username
         rows = db.execute("SELECT * FROM users WHERE username = ?", request.form.get("username"))
 
         # Ensure username exists and password is correct
         if len(rows) != 1 or not check_password_hash(rows[0]["hash"], request.form.get("password")):
-            return apology("invalid username and/or password", 403)
+            flash("Invalid username and/or password.")
+            return render_template("login.html")
 
         # Remember which user has logged in
         session["user_id"] = rows[0]["id"]
@@ -101,23 +104,29 @@ def register():
     """Register user"""
     if request.method == "POST":
         if not request.form.get("username"):
-            return apology("Please enter a username.", 400)
+            flash("Please provide a username.")
+            return render_template("register.html")
         elif not request.form.get("password"):
-            return apology("Please enter a password.", 400)
+            flash("Please provide a password.")
+            return render_template("register.html")
         elif not request.form.get("confirmation"):
-            return apology("Please confirm your password.", 400)
+            flash("Please confirm your password.")
+            return render_template("register.html")
         elif request.form.get("password") != request.form.get("confirmation"):
-            return apology("The passwords don't match.", 400)
+            flash("Both passwords must match.")
+            return render_template("register.html")
         else:
             # Duplicate username creates an exception due to the "UNIQUE" constraint on the username field
             try:
                 added = db.execute("INSERT INTO users (username, hash) VALUES (?, ?)",
                                    request.form.get("username"), generate_password_hash(request.form.get("password")))
             except (RuntimeError, ValueError):
-                return apology("Username already in use", 400)
+                flash("Username already exists.")
+                return render_template("register.html")
 
             session["user_id"] = added
 
+            flash("Thank you for joining ArenaQuiz!")
             return redirect("/")
 
     elif request.method == "GET":
@@ -138,23 +147,30 @@ def change_password():
     # Input validation
     if request.method == "POST":
         if not request.form.get("old_password"):
-            return apology("Enter current password", 400)
+            flash("Please enter your current password.")
+            return render_template("change_password.html")
         elif not request.form.get("new_password"):
-            return apology("Enter new password", 400)
+            flash("Please enter the new password.")
+            return render_template("change_password.html")
         elif not request.form.get("confirmation"):
-            return apology("Confirm Password", 400)
+            flash("Please confirm your new password.")
+            return render_template("change_password.html")
         elif request.form.get("new_password") != request.form.get("confirmation"):
-            return apology("The passwords don't match.", 400)
+            flash("Both new passwords must match.")
+            return render_template("change_password.html")
         else:
             rows = db.execute("SELECT hash FROM users WHERE id = ?", session["user_id"])
-            if rows == []:
-                return apology("An error occurred", 400)
+            if not rows:
+                flash("An error occurred.")
+                return render_template("change_password.html")
             elif not check_password_hash(rows[0]["hash"], request.form.get("old_password")):
-                return apology("Password invalid", 403)
+                flash("Invalid password.")
+                return render_template("change_password.html")
             # Update password
             db.execute("UPDATE users SET hash = ? WHERE id = ?",
                        generate_password_hash(request.form.get("new_password")), session["user_id"])
 
+            flash("Password updated successfully.")
             return redirect("/")
 
     elif request.method == "GET":
