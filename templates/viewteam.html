@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    View Team
+{% endblock %}
+
+{% block main %}
+    <h1>{{ name }}: Roster</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Players</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for player in players %}
+                <tr>
+                    <td>{{ player.name }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %} 

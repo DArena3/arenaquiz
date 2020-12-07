@@ -37,10 +37,6 @@ Session(app)
 # Configure CS50 Library to use SQLite database
 db = SQL("sqlite:///records.db")
 
-# Make sure API key is set
-if not os.environ.get("API_KEY"):
-    raise RuntimeError("API_KEY not set")
-
 
 @app.route("/", methods=["GET"])
 @login_required
@@ -133,11 +129,60 @@ def register():
         return render_template("register.html")
 
 
-@app.route("/teams")
+@app.route("/teams", methods=["GET", "POST"])
 @login_required
 def teams():
-    # TODO
-    pass
+    if request.method == "POST":
+        if not request.form.get("team"):
+            flash("Please select a team.")
+            teams = db.execute("SELECT * FROM teams WHERE user_id = ?", session["user_id"])
+            return render_template("teams.html", teams=teams)
+        
+        return redirect("/viewteam?team_id=" + request.form.get("team"))
+
+    elif request.method == "GET":
+        teams = db.execute("SELECT * FROM teams WHERE user_id = ?", session["user_id"])
+        return render_template("teams.html", teams=teams)
+
+
+@app.route("/viewteam", methods=["GET"])
+@login_required
+def view_team():
+    if request.method == "GET":
+        name = db.execute("SELECT name FROM teams WHERE user_id = ? AND id = ?", session["user_id"], request.args.get("team_id"))
+        if not name:
+            return apology("Team not found", 404)
+        players = db.execute("SELECT name FROM players WHERE user_id = ? AND team_id = ?", session["user_id"], request.args.get("team_id"))
+        return render_template("viewteam.html", name=name[0]['name'], players=players)
+
+
+@app.route("/add_team", methods=["GET", "POST"])
+@login_required
+def add_team():
+    if request.method == "POST":
+        if not request.form.get("tname"):
+            flash("Please enter a team name.")
+            return render_template("add_team.html")
+
+        names = []
+        for i in range(1,9):
+            if request.form.get("player" + str(i)):
+                names.append(request.form.get("player" + str(i)))
+        if not names:
+            flash("Team must have at least one player.")
+            return render_template("add_team.html")
+
+        team_id = db.execute("INSERT INTO teams (user_id, name) VALUES (?, ?)", session["user_id"], request.form.get("tname"))
+
+        for name in names:
+            db.execute("INSERT INTO players (user_id, name, team_id) VALUES (?, ?, ?)", session["user_id"], name, team_id)
+
+        flash("Successfully added team: " + request.form.get("tname") + ".")
+        return redirect("/teams")
+
+    elif request.method == "GET":
+        return render_template("add_team.html")
+    
     
 @app.route("/change_password", methods=["GET", "POST"])
 @login_required

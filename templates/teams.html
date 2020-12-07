@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Teams
+{% endblock %}
+
+{% block main %}
+    <h1>View Your Teams</h1>
+    {% if not teams %}
+        <p>You have no teams yet. <a href="/newteam">Add a team?</a></p>
+    {% else %}
+        <form action="/teams" method="post">
+            <select name="team">
+                <option selected disabled>Your Teams</option>
+                {% for team in teams %}
+                    <option value="{{ team.id }}">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary" type="submit">View Team</button>
+        </form>
+        <button class="btn btn-primary"><a id="addteam" href="/add_team">Add a Team</a></button>
+    {% endif %}
+{% endblock %} 

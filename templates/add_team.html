@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Add Team
+{% endblock %}
+
+{% block main %}
+    <h1>Add A Team</h1>
+
+    <form action="/add_team" method="post">
+        <input type="text" id="tname" name="tname" placeholder="Team Name"></input>
+        <label for="pnum">How many players?</label>
+        <select name="pnum" id="pnum" onchange="changeInputNum(this.value)">
+            {% for i in range(1,4) %}
+                <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+            <option value="4" selected>4</option>
+            {% for i in range(5,9) %}
+                <option value="{{ i }}">{{ i }}</option>
+            {% endfor %}
+        </select>
+        <div id="players">
+            {% for i in range(1,5) %}
+                <input type="text" name="player{{ i }}" id="player{{ i }}" class="pname" placeholder="Player {{ i }} Name"></input>
+            {% endfor %}
+        </div>
+        <button class="btn btn-primary" type="submit">Add Team</button>
+    </form>
+
+    <script>
+        function changeInputNum(n) {
+            let inputNum = document.getElementsByClassName('pname').length
+            if (n < 1 || n > 8) return
+            if (n < inputNum) {
+                for (let i = Number(n) + 1; i <= inputNum; i++) {
+                    document.getElementById('player' + i).remove()
+                }
+            }
+            else if (n > inputNum) {
+                for (let i = inputNum + 1; i <= n; i++) {
+                    let input = document.createElement("INPUT")
+                    input.type = "text"
+                    input.name = "player" + i
+                    input.id = "player" + i
+                    input.className = "pname"
+                    input.placeholder = "Player " + i + " Name"
+                    document.getElementById('players').appendChild(input)
+                }
+            }
+        }
+    </script>
+{% endblock %} 
