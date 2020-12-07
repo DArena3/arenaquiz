@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    New Game
+{% endblock %}
+
+{% block main %}
+    <h1>Create New Game</h1>
+    {% if not teams %}
+        <p>You have no teams yet. <a href="/newteam">Add a team?</a></p>
+    {% elif teams|length == 1 %}
+        <p>You only have one team. <a href="/newteam">Add a team?</a></p>
+    {% else %}
+        <form action="/new_game" method="post">
+            <label for="left_team">Team 1:</label>
+            <select name="left_team" id="left_team" onchange="disableSameTeam(this)">
+                <option selected disabled>Team 1</option>
+                {% for team in teams %}
+                    <option value="{{ team.id }}" class="left_team">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+            <label for="right_team">Team 2:</label>
+            <select name="right_team" id="right_team" onchange="disableSameTeam(this)">
+                <option selected disabled>Team 2</option>
+                {% for team in teams %}
+                    <option value="{{ team.id }}" class="right_team">{{ team.name }}</option>
+                {% endfor %}
+            </select>
+            <button class="btn btn-primary" type="submit">New Game</button>
+        </form>
+        <button class="btn btn-primary"><a id="addteam" href="/add_team">Add a Team</a></button>
+        <script>
+            function disableSameTeam(dropdown) {
+                if (dropdown.id === "left_team") {
+                    for (option of document.getElementsByClassName('right_team')) {
+                        if (option.value === dropdown.value) option.disabled = true
+                        else option.disabled = false
+                    }
+                }
+                else if (dropdown.id === "right_team") {
+                    for (option of document.getElementsByClassName('left_team')) {
+                        if (option.value === dropdown.value) option.disabled = true
+                        else option.disabled = false
+                    }
+                }
+            }
+        </script>
+    {% endif %}
+{% endblock %} 

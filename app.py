@@ -183,6 +183,30 @@ def add_team():
     elif request.method == "GET":
         return render_template("add_team.html")
     
+
+@app.route("/new_game", methods=["GET", "POST"])
+@login_required
+def new_game():
+    if request.method == "POST":
+        if not request.form.get("left_team") or not request.form.get("right_team"):
+            flash("Please select two teams.")
+            teams = db.execute("SELECT * FROM teams WHERE user_id = ?", session["user_id"])
+            return render_template("new_game.html", teams=teams)
+        elif request.form.get("left_team") == request.form.get("right_team"):
+            flash("Teams must not be the same.")
+            teams = db.execute("SELECT * FROM teams WHERE user_id = ?", session["user_id"])
+            return render_template("new_game.html", teams=teams)
+
+        game_id = db.execute("INSERT INTO games (user_id, left_team_id, right_team_id) VALUES (?, ?, ?)", session["user_id"], request.form.get("left_team"), request.form.get("right_team"))
+        session["game_id"] = game_id
+        
+        flash("Successfully created new game: " + str(session["game_id"]))
+        return redirect("/")
+
+    elif request.method == "GET":
+        teams = db.execute("SELECT * FROM teams WHERE user_id = ?", session["user_id"])
+        return render_template("new_game.html", teams=teams)
+
     
 @app.route("/change_password", methods=["GET", "POST"])
 @login_required
