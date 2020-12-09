@@ -64,6 +64,7 @@ table {
 .team-buttons {
     display: flex;
     flex-direction: row;
+    justify-content: center;
 }
 
 .player-buttons {
@@ -71,5 +72,10 @@ table {
 }
 
 .score-buttons {
+    margin: 5px;
     visibility: hidden;
+}
+
+.bluetext {
+    color: #537fbe;
 }

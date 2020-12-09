@@ -12,23 +12,29 @@
         <p>You only have one team. <a href="/newteam">Add a team?</a></p>
     {% else %}
         <form action="/new_game" method="post">
-            <label for="left_team">Team 1:</label>
-            <select name="left_team" id="left_team" onchange="disableSameTeam(this)">
-                <option selected disabled>Team 1</option>
-                {% for team in teams %}
-                    <option value="{{ team.id }}" class="left_team">{{ team.name }}</option>
-                {% endfor %}
-            </select>
-            <label for="right_team">Team 2:</label>
-            <select name="right_team" id="right_team" onchange="disableSameTeam(this)">
-                <option selected disabled>Team 2</option>
-                {% for team in teams %}
-                    <option value="{{ team.id }}" class="right_team">{{ team.name }}</option>
-                {% endfor %}
-            </select>
-            <button class="btn btn-primary" type="submit">New Game</button>
+            <div class="form-group">
+                <label for="left_team">Team 1:</label>
+                <select class="form-control" name="left_team" id="left_team" onchange="disableSameTeam(this)">
+                    <option selected disabled>Team 1</option>
+                    {% for team in teams %}
+                        <option value="{{ team.id }}" class="left_team">{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="right_team">Team 2:</label>
+                <select class="form-control" name="right_team" id="right_team" onchange="disableSameTeam(this)">
+                    <option selected disabled>Team 2</option>
+                    {% for team in teams %}
+                        <option value="{{ team.id }}" class="right_team">{{ team.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-primary btn-lg" type="submit">New Game</button>
+            </div>  
         </form>
-        <button class="btn btn-primary"><a id="addteam" href="/add_team">Add a Team</a></button>
+        <button class="btn btn-secondary btn-sm"><a id="addteam" href="/add_team">Add a Team</a></button>
         <script>
             function disableSameTeam(dropdown) {
                 if (dropdown.id === "left_team") {
