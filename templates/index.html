@@ -5,6 +5,9 @@
 {% endblock %}
 
 {% block main %}
+    {% if session.game_id and session.tossup_num %}
+        <a href="/game">Return to your game in progress?</a>
+    {% endif %}
     <h3>hello</h3>
     <h4>This page will have text soon</h4>
 {% endblock %}

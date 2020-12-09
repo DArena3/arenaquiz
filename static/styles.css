@@ -56,3 +56,20 @@ table {
     color: #fff;
     text-decoration: none;
 }
+
+.hidden {
+    display: none;
+}
+
+.team-buttons {
+    display: flex;
+    flex-direction: row;
+}
+
+.player-buttons {
+    margin: 10px;
+}
+
+.score-buttons {
+    visibility: hidden;
+}

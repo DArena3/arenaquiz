@@ -5,13 +5,202 @@
 {% endblock %}
 
 {% block main %}
-    <form action="/login" method="post">
-        <div class="form-group">
-            <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
+    <h1>Game</h1>
+    <h3>Tossup {{ tossup }}</h3>
+    <div id="buttons">
+        <div id="left-buttons" class="team-buttons">
+            {% for player in gamedata.left_players %}
+                <div id="{{ player.id }}" class="player-buttons">
+                    <button onclick="playerButtonClicked(this)" class="player-button">{{ player.name }}</button>
+                    <div id="{{ player.id }}-buttons" class="left score-buttons">
+                        <button score="15" class="score-button power" onclick="score(this)">15</button>
+                        <button score="10" class="score-button ten" onclick="score(this)">10</button>
+                        <button score="-5" class="score-button neg" onclick="neg(this)">-5</button>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-        <div class="form-group">
-            <input class="form-control" name="password" placeholder="Password" type="password">
+        <br>
+        <div id="right-buttons" class="team-buttons">
+            {% for player in gamedata.right_players %}
+                <div id="{{ player.id }}" class="player-buttons">
+                    <button onclick="playerButtonClicked(this)" class="player-button">{{ player.name }}</button>
+                    <div id="{{ player.id }}-buttons" class="right score-buttons">
+                        <button score="15" class="score-button power" onclick="score(this)">15</button>
+                        <button score="10" class="score-button ten" onclick="score(this)">10</button>
+                        <button score="-5" class="score-button neg" onclick="neg(this)">-5</button>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-        <button class="btn btn-primary" type="submit">Log In</button>
+    </div>
+    <form id="submit_tossup" action="/game" method="post">
+        <input type="number" id="scoring-player" name="scoring-player" style="display: none;">
+        <input type="number" id="score" name="score" style="display: none;">
+        <input type="number" id="negging-player" name="negging-player" style="display: none;">
+        <input type="number" id="neg-score" name="neg-score" style="display: none;">
+        <div id="bonus-buttons">
+            <h5>Bonus</h5>
+            <input type="checkbox" name="b-checkbox-1" value="10"></input>
+            <input type="checkbox" name="b-checkbox-2" value="10"></input>
+            <input type="checkbox" name="b-checkbox-3" value="10"></input>
+        </div>
+        <button class="btn btn-primary" type="submit">Submit</button>
     </form>
+    <button class="btn btn-primary" type="button" onclick="reset()">Reset</button>
+    <table>
+        <thead>
+            <tr>
+                <td></td>
+                <th colspan="{{ gamedata.left_players|length + 2}}">Team 1</th>
+                <th colspan="{{ gamedata.right_players|length + 2}}">Team 2</th>
+            </tr>
+            <tr>
+                <th>Tossup</th>
+                {% for player in gamedata.left_players %}
+                    <th>{{ player.name }}</th>
+                {% endfor %}
+                <th>Bonus</th>
+                <th>Subtotal</th>
+                {% for player in gamedata.right_players %}
+                    <th>{{ player.name }}</th>
+                {% endfor %}
+                <th>Bonus</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t_num in range(1, session.tossup_num) %}
+                <tr>
+                    <td>{{ t_num }}</td>
+                    {% if t_num in gamedata.left_tossups %}
+                        {% for player in gamedata.left_players %}
+                            {% if gamedata.left_tossups[t_num].player_id == player.id %}
+                                <td>{{ gamedata.left_tossups[t_num].score }}</td>
+                            {% else %}
+                                <td>0</td>
+                            {% endif %}
+                        {% endfor %}
+                        <td>{{ gamedata.left_tossups[t_num].bonus }}</td>
+                        <td>{{ gamedata.left_tossups[t_num].subscore }}</td>
+                    {% else %}
+                        {% for player in gamedata.left_players %}
+                            <td>0</td>
+                        {% endfor %}
+                        <td>0</td>
+                        <td>--</td>
+                    {% endif %}
+
+                    {% if t_num in gamedata.right_tossups %}
+                        {% for player in gamedata.right_players %}
+                            {% if gamedata.right_tossups[t_num].player_id == player.id %}
+                                <td>{{ gamedata.right_tossups[t_num].score }}</td>
+                            {% else %}
+                                <td>0</td>
+                            {% endif %}
+                        {% endfor %}
+                        <td>{{ gamedata.right_tossups[t_num].bonus }}</td>
+                        <td>{{ gamedata.right_tossups[t_num].subscore }}</td>
+                    {% else %}
+                        {% for player in gamedata.right_players %}
+                            <td>0</td>
+                        {% endfor %}
+                        <td>0</td>
+                        <td>--</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Stats:</th>
+                {% for player in gamedata.left_players %}
+                    <th>PPG</th>
+                {% endfor %}
+                <th>PPB</th>
+                <th>Total</th>
+                {% for player in gamedata.right_players %}
+                    <th>PPG</th>
+                {% endfor %}
+                <th>PPB</th>
+                <th>Total</th>
+            </tr>
+            <tr>
+                <td></td>
+                {% for player in gamedata.left_ppgs %}
+                    <td>{{ gamedata.left_ppgs[player] }}</td>
+                {% endfor %}
+                <td>{{ gamedata.left_ppb|two_places }}</td>
+                <td>{{ gamedata.left_score }}</td>
+                {% for player in gamedata.right_ppgs %}
+                    <td>{{ gamedata.right_ppgs[player] }}</td>
+                {% endfor %}
+                <td>{{ gamedata.right_ppb|two_places }}</td>
+                <td>{{ gamedata.right_score }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    <script>
+        function reset() {
+            document.getElementById("submit_tossup").reset()
+            for (e of document.getElementsByClassName("score-buttons")) {
+                e.style.visibility = "hidden"
+            }
+            for (e of document.getElementsByClassName("player-button")) {
+                e.removeAttribute("disabled")
+            }
+            for (e of document.getElementsByClassName("neg")) {
+                e.removeAttribute("disabled")
+            }
+        }
+        function playerButtonClicked(element) {
+            p_id = element.parentElement.id
+            document.getElementById(p_id + "-buttons").style.visibility = "visible"
+            button_divs = element.parentElement.parentElement.getElementsByClassName("player-buttons")
+            for (e of button_divs) {
+                if (e.id != p_id) {
+                    e.getElementsByClassName("player-button")[0].disabled = "true"
+                }
+            }
+        }
+        function score(element) {
+            p_id = element.parentElement.parentElement.id
+            document.getElementById("scoring-player").value = p_id
+            document.getElementById("score").value = element.getAttribute("score")
+            team_div = element.parentElement.parentElement.parentElement.id
+            console.log(team_div)
+            if (team_div === "left-buttons") {
+                for (e of document.getElementById("right-buttons").getElementsByClassName("player-button")) {
+                    e.disabled = "true"
+                }
+            }
+            else if (team_div === "right-buttons") {
+                for (e of document.getElementById("left-buttons").getElementsByClassName("player-button")) {
+                    e.disabled = "true"
+                }
+            }
+        }
+        function neg(element) {
+            p_id = element.parentElement.parentElement.id
+            document.getElementById("negging-player").value = p_id
+            document.getElementById("neg-score").value = element.getAttribute("score")
+            team_div = element.parentElement.parentElement.parentElement.id
+            console.log(team_div)
+            if (team_div === "left-buttons") {
+                for (e of document.getElementById("right-buttons").getElementsByClassName("neg")) {
+                    e.disabled = "true"
+                }
+            }
+            else if (team_div === "right-buttons") {
+                for (e of document.getElementById("left-buttons").getElementsByClassName("neg")) {
+                    e.disabled = "true"
+                }
+            }
+        }
+        // From https://stackoverflow.com/questions/6320113/how-to-prevent-form-resubmission-when-page-is-refreshed-f5-ctrlr
+        // Prevents form submission on refresh
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+    </script>
 {% endblock %}

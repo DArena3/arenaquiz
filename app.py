@@ -26,7 +26,7 @@ def after_request(response):
 
 
 # Custom filter
-app.jinja_env.filters["2places"] = two_places
+app.jinja_env.filters["two_places"] = two_places
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_FILE_DIR"] = mkdtemp()
@@ -197,17 +197,61 @@ def new_game():
             teams = db.execute("SELECT * FROM teams WHERE user_id = ?", session["user_id"])
             return render_template("new_game.html", teams=teams)
 
-        game_id = db.execute("INSERT INTO games (user_id, left_team_id, right_team_id) VALUES (?, ?, ?)", session["user_id"], request.form.get("left_team"), request.form.get("right_team"))
+        game_id = db.execute("INSERT INTO games (user_id, left_team_id, right_team_id) VALUES (?, ?, ?)", session["user_id"],
+                             request.form.get("left_team"), request.form.get("right_team"))
         session["game_id"] = game_id
-        
-        flash("Successfully created new game: " + str(session["game_id"]))
-        return redirect("/")
+        session["tossup_num"] = 1
+
+        return redirect("/game")
 
     elif request.method == "GET":
         teams = db.execute("SELECT * FROM teams WHERE user_id = ?", session["user_id"])
         return render_template("new_game.html", teams=teams)
 
     
+@app.route("/game", methods=["GET", "POST"])
+@login_required
+def game():
+    if request.method == "POST":
+        if "game_id" not in session or "tossup_num" not in session:
+            return apology("It appears you do not have a game in progress.", 404)
+
+        bonus = 0
+        if request.form.get("b-checkbox-1"):
+            bonus += int(request.form.get("b-checkbox-1"))
+        if request.form.get("b-checkbox-2"):
+            bonus += int(request.form.get("b-checkbox-2"))
+        if request.form.get("b-checkbox-3"):
+            bonus += int(request.form.get("b-checkbox-3"))
+
+        if request.form.get("scoring-player") and request.form.get("score"):
+            team_id = db.execute("SELECT team_id FROM players WHERE id = ?", request.form.get("scoring-player"))
+            if not team_id:
+                return apology("An error occurred", 500)
+            else:
+                team_id = team_id[0]["team_id"]
+            db.execute("INSERT INTO score_events (game_id, team_id, player_id, tossup_num, score, bonus) VALUES (?, ?, ?, ?, ?, ?)", 
+                       session["game_id"], team_id, request.form.get("scoring-player"), session["tossup_num"], request.form.get("score"), bonus)
+        if request.form.get("negging-player") and request.form.get("neg-score"):
+            team_id = db.execute("SELECT team_id FROM players WHERE id = ?", request.form.get("negging-player"))
+            if not team_id:
+                return apology("An error occurred", 500)
+            else:
+                team_id = team_id[0]["team_id"]
+            db.execute("INSERT INTO score_events (game_id, team_id, player_id, tossup_num, score, bonus) VALUES (?, ?, ?, ?, ?, ?)", 
+                       session["game_id"], team_id, request.form.get("negging-player"), session["tossup_num"], request.form.get("neg-score"), 0)
+
+        gamedata = get_gamedata(session["game_id"])
+        session["tossup_num"] += 1
+        tossup = session["tossup_num"]
+        return render_template("game.html", gamedata=gamedata, tossup=tossup)
+
+    elif request.method == "GET":
+        gamedata = get_gamedata(session["game_id"])
+        tossup = session["tossup_num"]
+        return render_template("game.html", gamedata=gamedata, tossup=tossup)
+
+
 @app.route("/change_password", methods=["GET", "POST"])
 @login_required
 def change_password():
@@ -251,6 +295,97 @@ def errorhandler(e):
     if not isinstance(e, HTTPException):
         e = InternalServerError()
     return apology(e.name, e.code)
+
+
+def get_gamedata(g_id):
+    gamedata = {}
+    global db
+
+    l_id = db.execute("SELECT left_team_id FROM games WHERE id = ?", g_id)
+    r_id = db.execute("SELECT right_team_id FROM games WHERE id = ?", g_id)
+    if not l_id or not r_id:
+        return None
+    else:
+        l_id = l_id[0]["left_team_id"]
+        r_id = r_id[0]["right_team_id"]
+
+    left_players = db.execute("SELECT * FROM players WHERE team_id = ?", l_id)
+    gamedata["left_players"] = left_players
+    right_players = db.execute("SELECT * FROM players WHERE team_id = ?", r_id)
+    gamedata["right_players"] = right_players
+
+    left_scores = db.execute("SELECT * FROM score_events WHERE game_id = ? AND team_id = ?", g_id, l_id)
+    left_tossups = {}
+    left_subscore = 0
+    left_ppgs = {}
+    left_ppb = [0, 0]
+    if left_scores:
+        for row in left_scores:
+            left_subscore += (row["score"] + row["bonus"])
+            left_tossups[row["tossup_num"]] = {"player_id": row["player_id"], "score": row["score"], "bonus": row["bonus"], "subscore": left_subscore}
+
+            if not row["player_id"] in left_ppgs:
+                left_ppgs[row["player_id"]] = row["score"]
+            else:
+                left_ppgs[row["player_id"]] += row["score"]
+
+            if row["score"] > 0:
+                left_ppb[0] += row["bonus"]
+                left_ppb[1] += 1
+
+    gamedata["left_tossups"] = left_tossups
+
+    for player in left_players:
+        pid = player["id"]
+        if not pid in left_ppgs:
+            left_ppgs[pid] = 0
+    gamedata["left_ppgs"] = left_ppgs
+
+    if left_ppb[1] == 0:
+        left_ppb = 0
+    else:
+        left_ppb = left_ppb[0] / left_ppb[1]
+    gamedata["left_ppb"] = left_ppb
+
+    gamedata["left_score"] = left_subscore
+    
+    right_scores = db.execute("SELECT * FROM score_events WHERE game_id = ? AND team_id = ?", g_id, r_id)
+    right_tossups = {}
+    right_subscore = 0
+    right_ppgs = {}
+    right_ppb = [0, 0]
+    if right_scores:
+        for row in right_scores:
+            right_subscore += (row["score"] + row["bonus"])
+            right_tossups[row["tossup_num"]] = {"player_id": row["player_id"], "score": row["score"], "bonus": row["bonus"], "subscore": right_subscore}
+
+            if not row["player_id"] in right_ppgs:
+                right_ppgs[row["player_id"]] = row["score"]
+            else:
+                right_ppgs[row["player_id"]] += row["score"]
+
+            if row["score"] > 0:
+                right_ppb[0] += row["bonus"]
+                right_ppb[1] += 1
+
+    gamedata["right_tossups"] = right_tossups
+
+    for player in right_players:
+        pid = player["id"]
+        if not pid in right_ppgs:
+            right_ppgs[pid] = 0
+    gamedata["right_ppgs"] = right_ppgs
+
+    if right_ppb[1] == 0:
+        right_ppb = 0
+    else:
+        right_ppb = right_ppb[0] / right_ppb[1]
+    gamedata["right_ppb"] = right_ppb
+
+    gamedata["right_score"] = right_subscore
+
+    print(gamedata)
+    return gamedata
 
 
 # Listen for errors
