@@ -313,6 +313,11 @@ def get_gamedata(g_id):
         l_id = l_id[0]["left_team_id"]
         r_id = r_id[0]["right_team_id"]
 
+    l_name = db.execute("SELECT name FROM teams WHERE id = ?", l_id)
+    r_name = db.execute("SELECT name FROM teams WHERE id = ?", r_id)
+    gamedata["left_name"] = l_name[0]["name"]
+    gamedata["right_name"] = r_name[0]["name"]
+
     left_players = db.execute("SELECT * FROM players WHERE team_id = ?", l_id)
     gamedata["left_players"] = left_players
     right_players = db.execute("SELECT * FROM players WHERE team_id = ?", r_id)
