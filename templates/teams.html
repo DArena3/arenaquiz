@@ -7,7 +7,7 @@
 {% block main %}
     <h1>View Your Teams</h1>
     {% if not teams %}
-        <p>You have no teams yet. <a href="/newteam">Add a team?</a></p>
+        <p>You have no teams yet. <a href="/add_team">Add a team?</a></p>
     {% else %}
         <form action="/teams" method="post">
             <div class="form-group">
@@ -23,6 +23,6 @@
                 <button class="btn btn-primary btn-lg" type="submit">View Team</button>
             </div>  
         </form>
-        <button class="btn btn-secondary btn-sm"><a id="addteam" href="/add_team">Add a Team</a></button>
+        <button class="btn btn-secondary btn-sm"><a class="add-link" href="/add_team">Add a Team</a></button>
     {% endif %}
 {% endblock %} 

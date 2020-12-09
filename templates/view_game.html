@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Viewing Game
+{% endblock %}
+
+{% block main %}
+    <h1>{{ gamedata.left_name }} (<span class="bluetext">{{ gamedata.left_score }}</span>) vs. 
+        {{ gamedata.right_name }} (<span class="bluetext">{{ gamedata.right_score }}</span>)</h1>
+    <table class="table table-striped table-bordered table-sm">
+        <thead>
+            <tr>
+                <td></td>
+                <th colspan="{{ gamedata.left_players|length + 2}}">{{ gamedata.left_name }}</th>
+                <th colspan="{{ gamedata.right_players|length + 2}}">{{ gamedata.right_name }}</th>
+            </tr>
+            <tr>
+                <th>Tossup</th>
+                {% for player in gamedata.left_players %}
+                    <th>{{ player.name }}</th>
+                {% endfor %}
+                <th>Bonus</th>
+                <th>Subtotal</th>
+                {% for player in gamedata.right_players %}
+                    <th>{{ player.name }}</th>
+                {% endfor %}
+                <th>Bonus</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t_num in range(1, gamedata.last_tossup + 1) %}
+                <tr>
+                    <td>{{ t_num }}</td>
+                    {% if t_num in gamedata.left_tossups %}
+                        {% for player in gamedata.left_players %}
+                            {% if gamedata.left_tossups[t_num].player_id == player.id %}
+                                <td>{{ gamedata.left_tossups[t_num].score }}</td>
+                            {% else %}
+                                <td>0</td>
+                            {% endif %}
+                        {% endfor %}
+                        <td>{{ gamedata.left_tossups[t_num].bonus }}</td>
+                        <td>{{ gamedata.left_tossups[t_num].subscore }}</td>
+                    {% else %}
+                        {% for player in gamedata.left_players %}
+                            <td>0</td>
+                        {% endfor %}
+                        <td>0</td>
+                        <td>--</td>
+                    {% endif %}
+
+                    {% if t_num in gamedata.right_tossups %}
+                        {% for player in gamedata.right_players %}
+                            {% if gamedata.right_tossups[t_num].player_id == player.id %}
+                                <td>{{ gamedata.right_tossups[t_num].score }}</td>
+                            {% else %}
+                                <td>0</td>
+                            {% endif %}
+                        {% endfor %}
+                        <td>{{ gamedata.right_tossups[t_num].bonus }}</td>
+                        <td>{{ gamedata.right_tossups[t_num].subscore }}</td>
+                    {% else %}
+                        {% for player in gamedata.right_players %}
+                            <td>0</td>
+                        {% endfor %}
+                        <td>0</td>
+                        <td>--</td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Stats:</th>
+                {% for player in gamedata.left_players %}
+                    <th>PPG</th>
+                {% endfor %}
+                <th>PPB</th>
+                <th>Total</th>
+                {% for player in gamedata.right_players %}
+                    <th>PPG</th>
+                {% endfor %}
+                <th>PPB</th>
+                <th>Total</th>
+            </tr>
+            <tr>
+                <td></td>
+                {% for player in gamedata.left_ppgs %}
+                    <td>{{ gamedata.left_ppgs[player] }}</td>
+                {% endfor %}
+                <td>{{ gamedata.left_ppb|two_places }}</td>
+                <td>{{ gamedata.left_score }}</td>
+                {% for player in gamedata.right_ppgs %}
+                    <td>{{ gamedata.right_ppgs[player] }}</td>
+                {% endfor %}
+                <td>{{ gamedata.right_ppb|two_places }}</td>
+                <td>{{ gamedata.right_score }}</td>
+            </tr>
+        </tfoot>
+    </table>
+{% endblock %}

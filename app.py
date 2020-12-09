@@ -138,14 +138,14 @@ def teams():
             teams = db.execute("SELECT * FROM teams WHERE user_id = ?", session["user_id"])
             return render_template("teams.html", teams=teams)
         
-        return redirect("/viewteam?team_id=" + request.form.get("team"))
+        return redirect("/view_team?team_id=" + request.form.get("team"))
 
     elif request.method == "GET":
         teams = db.execute("SELECT * FROM teams WHERE user_id = ?", session["user_id"])
         return render_template("teams.html", teams=teams)
 
 
-@app.route("/viewteam", methods=["GET"])
+@app.route("/view_team", methods=["GET"])
 @login_required
 def view_team():
     if request.method == "GET":
@@ -153,7 +153,7 @@ def view_team():
         if not name:
             return apology("Team not found", 404)
         players = db.execute("SELECT name FROM players WHERE user_id = ? AND team_id = ?", session["user_id"], request.args.get("team_id"))
-        return render_template("viewteam.html", name=name[0]['name'], players=players)
+        return render_template("view_team.html", name=name[0]['name'], players=players)
 
 
 @app.route("/add_team", methods=["GET", "POST"])
@@ -246,6 +246,11 @@ def game():
                        session["game_id"], team_id, request.form.get("negging-player"), session["tossup_num"], request.form.get("neg-score"), 0)
 
         gamedata = get_gamedata(session["game_id"])
+        if gamedata == 404:
+            return apology("Game does not exist.", 404)
+        elif gamedata == 403:
+            return apology("You are not allowed to view this game.", 403)
+
         session["tossup_num"] += 1
         tossup = session["tossup_num"]
         return render_template("game.html", gamedata=gamedata, tossup=tossup)
@@ -254,6 +259,42 @@ def game():
         gamedata = get_gamedata(session["game_id"])
         tossup = session["tossup_num"]
         return render_template("game.html", gamedata=gamedata, tossup=tossup)
+
+
+@app.route("/games", methods=["GET", "POST"])
+@login_required
+def games():
+    if request.method == "POST":
+        if not request.form.get("game"):
+            flash("Please select a game.")
+            games = db.execute("SELECT * FROM games WHERE user_id = ?", session["user_id"])
+            return render_template("games.html", games=games)
+        
+        return redirect("/view_game?game_id=" + request.form.get("game"))
+
+    elif request.method == "GET":
+        games = db.execute("SELECT * FROM games WHERE user_id = ?", session["user_id"])
+        for game in games:
+            left_team_name = db.execute("SELECT name FROM teams WHERE id = ?", game["left_team_id"])
+            right_team_name = db.execute("SELECT name FROM teams WHERE id = ?", game["right_team_id"])
+            game["left_team_name"] = left_team_name[0]["name"]
+            game["right_team_name"] = right_team_name[0]["name"]
+
+        return render_template("games.html", games=games)
+
+
+@app.route("/view_game", methods=["GET"])
+@login_required
+def view_game():
+    if request.method == "GET":
+        if not request.args.get("game_id"):
+            return apology("Please select a game.", 404)
+        gamedata = get_gamedata(request.args.get("game_id"))
+        if gamedata == 404:
+            return apology("Game does not exist.", 404)
+        elif gamedata == 403:
+            return apology("You are not allowed to view this game.", 403)
+        return render_template("view_game.html", gamedata=gamedata)
 
 
 @app.route("/change_password", methods=["GET", "POST"])
@@ -304,6 +345,12 @@ def errorhandler(e):
 def get_gamedata(g_id):
     gamedata = {}
     global db
+
+    u_id = db.execute("SELECT user_id FROM games WHERE id = ?", g_id)
+    if not u_id:
+        return 404
+    elif u_id[0]["user_id"] != session["user_id"]:
+        return 403
 
     l_id = db.execute("SELECT left_team_id FROM games WHERE id = ?", g_id)
     r_id = db.execute("SELECT right_team_id FROM games WHERE id = ?", g_id)
@@ -392,6 +439,15 @@ def get_gamedata(g_id):
     gamedata["right_ppb"] = right_ppb
 
     gamedata["right_score"] = right_subscore
+
+    last_tossup = db.execute("SELECT MAX(tossup_num) FROM score_events WHERE game_id = ?", g_id)
+    print(last_tossup)
+    last_tossup = last_tossup[0]["MAX(tossup_num)"]
+    print(last_tossup)
+    if not last_tossup:
+        gamedata["last_tossup"] = 1
+    else:
+        gamedata["last_tossup"] = last_tossup
 
     print(gamedata)
     return gamedata
