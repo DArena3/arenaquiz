@@ -35,21 +35,6 @@
             </div>  
         </form>
         <button class="btn btn-secondary btn-sm"><a id="addteam" href="/add_team">Add a Team</a></button>
-        <script>
-            function disableSameTeam(dropdown) {
-                if (dropdown.id === "left_team") {
-                    for (option of document.getElementsByClassName('right_team')) {
-                        if (option.value === dropdown.value) option.disabled = true
-                        else option.disabled = false
-                    }
-                }
-                else if (dropdown.id === "right_team") {
-                    for (option of document.getElementsByClassName('left_team')) {
-                        if (option.value === dropdown.value) option.disabled = true
-                        else option.disabled = false
-                    }
-                }
-            }
-        </script>
+        <script src="{{ url_for('static', filename='new_game.js') }}"></script>
     {% endif %}
 {% endblock %} 

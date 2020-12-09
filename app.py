@@ -224,7 +224,11 @@ def game():
         if request.form.get("b-checkbox-3"):
             bonus += int(request.form.get("b-checkbox-3"))
 
-        if request.form.get("scoring-player") and request.form.get("score"):
+        if request.form.get("scoring-player") and request.form.get("negging-player"):
+            if request.form.get("scoring-player") == request.form.get("negging-player"):
+                return apology("Scoring player and negging player cannot be the same", 400)
+
+        if request.form.get("score"):
             team_id = db.execute("SELECT team_id FROM players WHERE id = ?", request.form.get("scoring-player"))
             if not team_id:
                 return apology("An error occurred", 500)
@@ -232,7 +236,7 @@ def game():
                 team_id = team_id[0]["team_id"]
             db.execute("INSERT INTO score_events (game_id, team_id, player_id, tossup_num, score, bonus) VALUES (?, ?, ?, ?, ?, ?)", 
                        session["game_id"], team_id, request.form.get("scoring-player"), session["tossup_num"], request.form.get("score"), bonus)
-        if request.form.get("negging-player") and request.form.get("neg-score"):
+        if request.form.get("neg-score"):
             team_id = db.execute("SELECT team_id FROM players WHERE id = ?", request.form.get("negging-player"))
             if not team_id:
                 return apology("An error occurred", 500)

@@ -12,7 +12,7 @@
                 <div id="{{ player.id }}" class="player-buttons">
                     <button onclick="playerButtonClicked(this)" class="btn btn-info player-button">{{ player.name }}</button>
                     <div id="{{ player.id }}-buttons" class="left score-buttons">
-                        <button score="15" class="btn btn-warning score-button power" onclick="score(this)">15</button>
+                        <button score="15" class="btn btn-warning score-button power" onclick="power(this)">15</button>
                         <button score="10" class="btn btn-success score-button ten" onclick="score(this)">10</button>
                         <button score="-5" class="btn btn-danger score-button neg" onclick="neg(this)">-5</button>
                     </div>
@@ -24,7 +24,7 @@
                 <div id="{{ player.id }}" class="player-buttons">
                     <button onclick="playerButtonClicked(this)" class="btn btn-secondary player-button">{{ player.name }}</button>
                     <div id="{{ player.id }}-buttons" class="right score-buttons">
-                        <button score="15" class="btn btn-warning score-button power" onclick="score(this)">15</button>
+                        <button score="15" class="btn btn-warning score-button power" onclick="power(this)">15</button>
                         <button score="10" class="btn btn-success score-button ten" onclick="score(this)">10</button>
                         <button score="-5" class="btn btn-danger score-button neg" onclick="neg(this)">-5</button>
                     </div>
@@ -48,11 +48,11 @@
             </div>
         </div>
         <div class="form-group">
-            <button class="btn btn-primary" type="submit">Submit</button>
+            <button class="btn btn-primary btn-lg" type="submit">Submit</button>
         </div>
-        
     </form>
-    <button class="btn btn-primary" type="button" onclick="reset()">Reset</button>
+    <button class="btn btn-secondary btn-sm" type="button" onclick="reset()">Reset</button>
+    <button class="btn btn-primary btn-lg" type="button" data-toggle="button">Togglable</button>
     <br>
     <br>
     <table class="table table-striped table-bordered table-sm">
@@ -147,68 +147,5 @@
             </tr>
         </tfoot>
     </table>
-    <script>
-        function reset() {
-            console.log("resetting")
-            document.getElementById("submit_tossup").reset()
-            for (e of document.getElementsByClassName("score-buttons")) {
-                e.style.visibility = "hidden"
-            }
-            for (e of document.getElementsByClassName("player-button")) {
-                e.removeAttribute("disabled")
-            }
-            for (e of document.getElementsByClassName("neg")) {
-                e.removeAttribute("disabled")
-            }
-        }
-        function playerButtonClicked(element) {
-            p_id = element.parentElement.id
-            document.getElementById(p_id + "-buttons").style.visibility = "visible"
-            button_divs = element.parentElement.parentElement.getElementsByClassName("player-buttons")
-            for (e of button_divs) {
-                if (e.id != p_id) {
-                    e.getElementsByClassName("player-button")[0].disabled = "true"
-                }
-            }
-        }
-        function score(element) {
-            p_id = element.parentElement.parentElement.id
-            document.getElementById("scoring-player").value = p_id
-            document.getElementById("score").value = element.getAttribute("score")
-            team_div = element.parentElement.parentElement.parentElement.id
-            console.log(team_div)
-            if (team_div === "left-buttons") {
-                for (e of document.getElementById("right-buttons").getElementsByClassName("player-button")) {
-                    e.disabled = "true"
-                }
-            }
-            else if (team_div === "right-buttons") {
-                for (e of document.getElementById("left-buttons").getElementsByClassName("player-button")) {
-                    e.disabled = "true"
-                }
-            }
-        }
-        function neg(element) {
-            p_id = element.parentElement.parentElement.id
-            document.getElementById("negging-player").value = p_id
-            document.getElementById("neg-score").value = element.getAttribute("score")
-            team_div = element.parentElement.parentElement.parentElement.id
-            console.log(team_div)
-            if (team_div === "left-buttons") {
-                for (e of document.getElementById("right-buttons").getElementsByClassName("neg")) {
-                    e.disabled = "true"
-                }
-            }
-            else if (team_div === "right-buttons") {
-                for (e of document.getElementById("left-buttons").getElementsByClassName("neg")) {
-                    e.disabled = "true"
-                }
-            }
-        }
-        // From https://stackoverflow.com/questions/6320113/how-to-prevent-form-resubmission-when-page-is-refreshed-f5-ctrlr
-        // Prevents form submission on refresh
-        if (window.history.replaceState) {
-            window.history.replaceState(null, null, window.location.href);
-        }
-    </script>
+    <script src="{{ url_for('static', filename='game.js') }}"></script>
 {% endblock %}
