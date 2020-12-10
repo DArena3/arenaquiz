@@ -45,54 +45,31 @@ Quizbowl is a fast-paced, buzzer-based knowledge competition played by teams thr
 
 A typical round of quizbowl consists of tossups and bonuses.
 
-<<<<<<< HEAD
 **Tossup**
 A question read to both teams. Each tossup has multiple clues, ordered from hardest to easiest. A player can buzz in whenever they think they know the answer. If a player answers a tossup correctly, their team is awarded a bonus.
 
 **Bonus**
-=======
-*Tossup*
-A question read to both teams. Each tossup has multiple clues, ordered from hardest to easiest. A player can buzz in whenever they think they know the answer. If a player answers a tossup correctly, their team is awarded a bonus.
-Bonus
->>>>>>> 25cceca08f5ae97bfe7ddb1fb130808d5bd15413
 Each bonus consists of three parts worth 10 points each. After each part is read, the team answering the bonus has 5 seconds to come up with an answer.
 
 There are some additional terms for buzzing in on a tossup:
 
-<<<<<<< HEAD
 **Power**
 If a player correctly buzzes in sufficiently early during a tossup (i.e. while the harder clues are being read), they will earn 15 points as opposed to the usual 10.
 
 **Neg**
-=======
-*Power*
-If a player correctly buzzes in sufficiently early during a tossup (i.e. while the harder clues are being read), they will earn 15 points as opposed to the usual 10.
-*Neg*
->>>>>>> 25cceca08f5ae97bfe7ddb1fb130808d5bd15413
 If a player buzzes in incorrectly while a tossup is being read, their team loses 5 points and is locked out for the rest of the tossup. Note that there is no penalty for buzzing in after the tossup has been read in full, or if the other team has already negged.
 
 Finally, some common terms used in quizbowl statistics:
 
-<<<<<<< HEAD
 **PPG**
 Points Per Game. Used to keep track of the number of (tossup) points a player scored in a game. Can be used to compare players of a team when averaged over several games.
 
 **PPB**
-=======
-*PPG*
-Points Per Game. Used to keep track of the number of (tossup) points a player scored in a game. Can be used to compare players of a team when averaged over several games.
-*PPB*
->>>>>>> 25cceca08f5ae97bfe7ddb1fb130808d5bd15413
 Points Per Bonus. Keeps track of the average number of points a team recieves on a given bonus. Used to compare the strengths of teams, since bonuses are less variable than tossups.
 
 ## 3 Site Overview
 Users require an account to view the site. If a user tries to view the site without being logged in they will be redirected to the login page. If a user does not have an account, they can visit the "Register" page to create one. Once they create an account by entering a username and password, they can view the site and will be redirected to the index page.
 
-<<<<<<< HEAD
-=======
-For information on quizbowl terminology such as tossups and bonuses, as well as the exact rules of scoring, please see the information on the index page (`/`).
-
->>>>>>> 25cceca08f5ae97bfe7ddb1fb130808d5bd15413
 ##### Features common to every page: 
 Every page has the navbar visible, which contains links to several of the site's pages. Additionally, the site also makes use of Flask's "flash" messages to display errors and alerts to the user.
 
