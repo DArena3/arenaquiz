@@ -142,6 +142,11 @@ function toggleCheckbox(id) {
     else checkbox.checked = true
 }
 
+
+if (Number(document.getElementById("tossup").innerText) >= 21 && document.getElementById("left-score").innerText != document.getElementById("right-score").innerText) {
+    alert("20 tossups are complete! Continue?")
+}
+
 // From https://stackoverflow.com/questions/6320113/how-to-prevent-form-resubmission-when-page-is-refreshed-f5-ctrlr
 // Prevents form submission on refresh
 if (window.history.replaceState) {

@@ -305,6 +305,12 @@ def games():
         if not request.form.get("game"):
             flash("Please select a game.")
             games = db.execute("SELECT * FROM games WHERE user_id = ?", session["user_id"])
+            for game in games:
+                left_team_name = db.execute("SELECT name FROM teams WHERE id = ?", game["left_team_id"])
+                right_team_name = db.execute("SELECT name FROM teams WHERE id = ?", game["right_team_id"])
+                game["left_team_name"] = left_team_name[0]["name"]
+                game["right_team_name"] = right_team_name[0]["name"]
+                
             return render_template("games.html", games=games)
         
         # Submit GET request to view_game with game_id as arg

@@ -5,11 +5,11 @@
 {% endblock %}
 
 {% block main %}
-    <h1>{{ gamedata.left_name }} vs. {{ gamedata.right_name }}: <span class="bluetext">Tossup {{ tossup }}</span></h1>
+    <h1>{{ gamedata.left_name }} vs. {{ gamedata.right_name }}: <span class="bluetext">Tossup <span id="tossup">{{ tossup }}</span></span></h1>
     <div id="buttons">
         <div class="team-container">
             <div>
-                <h2>{{ gamedata.left_name }} (<span class="bluetext">{{ gamedata.left_score }}</span>): </h2>
+                <h2>{{ gamedata.left_name }} (<span id="left-score" class="bluetext">{{ gamedata.left_score }}</span>): </h2>
             </div>
             <div id="left-buttons" class="team-buttons">
                 {% for player in gamedata.left_players %}
@@ -26,7 +26,7 @@
         </div>
         <div class="team-container">
             <div>
-                <h2>{{ gamedata.right_name }} (<span class="bluetext">{{ gamedata.right_score }}</span>): </h2>
+                <h2>{{ gamedata.right_name }} (<span id="right-score" class="bluetext">{{ gamedata.right_score }}</span>): </h2>
             </div>
             <div id="right-buttons" class="team-buttons">
                 {% for player in gamedata.right_players %}
