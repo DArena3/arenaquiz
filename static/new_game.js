@@ -1,6 +1,9 @@
 /*
 * Scripts for new_game.html
 */
+
+// Function to dynamically enable/disapble dropdown options based on what the user has selected.
+// This is to prevent the user from creating a game where a team plays against itself.
 function disableSameTeam(dropdown) {
     if (dropdown.id === "left_team") {
         for (option of document.getElementsByClassName('right_team')) {
